@@ -1,6 +1,6 @@
 
-#NIMRA 2026 
-Interactive Race Map: An interactive map and calendar for the Northern Ireland Mountain Running Association (NIMRA) 2026 Championship and League seasons.
+# NIMRA 2026 
+Interactive Race Map: A simple interactive map and calendar for the Northern Ireland Mountain Running Association (NIMRA) 2026 Championship and League seasons.
 ## Features Interactive Map: 
 Visualizes race starts across Northern Ireland using Leaflet.js.
 ### Race Snapshot: 
