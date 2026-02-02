@@ -7,7 +7,7 @@ Visualizes race starts across Northern Ireland using Leaflet.js.
 A detailed table including race categories (Short, Medium, Long), dates, distances, and elevation gains.
 ### Responsive Design: 
 Optimized for both desktop and mobile viewing using Tailwind CSS.
-### Easy Navigation: 
+### Navigation: 
 Clickable table rows that pan and zoom the map to specific race locations
 ## Built With
 HTML5 / JavaScriptLeaflet.js for interactive mapping; Tailwind CSS for modern styling; CartoDB Voyager map tiles
