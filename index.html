@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIMRA Championship & League 2026</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #map {
+            height: 600px;
+            width: 100%;
+            border-radius: 0.5rem;
+            z-index: 1;
+        }
+
+        .championship-marker {
+            background-color: #ef4444;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        .league-marker {
+            background-color: #3b82f6;
+            border: 2px solid white;
+            border-radius: 50%;
+        }
+
+        .legend-icon {
+            width: 12px;
+            height: 12px;
+            display: inline-block;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        /* Custom scrollbar for a cleaner look */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 font-sans leading-tight">
+
+    <div class="max-w-6xl mx-auto p-4 md:p-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight">NIMRA Championship & League 2026
+            </h1>
+            <p class="mt-3 text-lg text-slate-600">Interactive Race Map & Schedule</p>
+            <div class="mt-4 flex justify-center gap-4">
+                <span
+                    class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium border border-red-200">Championship
+                    Series</span>
+                <span
+                    class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium border border-blue-200">NIMRA
+                    League</span>
+            </div>
+        </header>
+
+        <!-- Map Section -->
+        <div class="bg-white p-2 rounded-2xl shadow-xl mb-8 border border-slate-200">
+            <div id="map" class="shadow-inner"></div>
+            <div
+                class="p-4 bg-slate-50 border-t rounded-b-2xl flex flex-wrap items-center gap-6 text-sm text-slate-700">
+                <div class="flex items-center">
+                    <span class="legend-icon bg-[#ef4444]"></span>
+                    <span class="font-medium">Championship Race</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="legend-icon bg-[#3b82f6]"></span>
+                    <span class="font-medium">League Race</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="legend-icon bg-[#8b5cf6]"></span>
+                    <span class="font-medium">Special/Ultra</span>
+                </div>
+                <div class="ml-auto hidden md:block italic text-slate-500 underline decoration-dotted">
+                    Click markers or table rows to explore
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Section -->
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-5 bg-slate-800 text-white flex justify-between items-center">
+                <div>
+                    <h2 class="text-xl font-semibold">Race Calendar Snapshot</h2>
+                    <p class="text-slate-400 text-xs mt-1 italic">Distances & climbs are approximate based on course
+                        profiles</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs font-bold bg-white/10 px-2 py-1 rounded border border-white/20">2026
+                        SEASON</span>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b text-slate-500 text-xs uppercase tracking-wider font-bold">
+                            <th class="px-6 py-4">Event</th>
+                            <th class="px-6 py-4">Date</th>
+                            <th class="px-6 py-4">Classification</th>
+                            <th class="px-6 py-4 text-center">Distance</th>
+                            <th class="px-6 py-4 text-center">Climb</th>
+                        </tr>
+                    </thead>
+                    <tbody id="race-table-body" class="divide-y divide-slate-100">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer class="mt-12 text-center text-sm text-slate-400 pb-16">
+            <div class="max-w-2xl mx-auto border-t border-slate-200 pt-8">
+                <p class="mb-2">This map is a visual guide for the NIMRA 2026 season.</p>
+                <p>Verify all entry details, kit requirements, and start times at
+                    <a href="https://www.nimra.org.uk" target="_blank"
+                        class="text-blue-500 hover:text-blue-700 font-medium transition-colors">nimra.org.uk</a>
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        const raceData = [
+            // CHAMPIONSHIP RACES
+            { name: "Slieve Gullion", date: "07/03/2026", type: "Championship", cat: "Short", dist: "6.2km", climb: "360m", lat: 54.126, lng: -6.425, color: "#ef4444" },
+            { name: "Annalong Horseshoe (Long)", date: "25/04/2026", type: "Championship", cat: "Long", dist: "21.1km", climb: "1550m", lat: 54.135, lng: -5.923, color: "#ef4444" },
+            { name: "Cairncastle Classic", date: "06/06/2026", type: "Championship", cat: "Medium", dist: "16.2km", climb: "620m", lat: 54.897, lng: -5.858, color: "#ef4444" },
+            { name: "Flagstaff to Carlingford", date: "21/06/2026", type: "Championship", cat: "Medium", dist: "17.5km", climb: "900m", lat: 54.113, lng: -6.340, color: "#ef4444" },
+            { name: "Spelga Skyline", date: "04/07/2026", type: "Championship", cat: "Long", dist: "21.0km", climb: "1500m", lat: 54.175, lng: -6.046, color: "#ef4444" },
+            { name: "Scrabo Hill Race", date: "20/08/2026", type: "Championship", cat: "Short", dist: "6.4km", climb: "365m", lat: 54.582, lng: -5.717, color: "#ef4444" },
+
+            // LEAGUE RACES
+            { name: "Glenariffe Spud Run", date: "14/03/2026", type: "League", cat: "Short", dist: "9.5km", climb: "370m", lat: 55.050, lng: -6.058, color: "#3b82f6" },
+            { name: "Pat Dunbar Memorial", date: "11/04/2026", type: "League", cat: "Medium", dist: "13.0km", climb: "550m", lat: 54.175, lng: -6.115, color: "#3b82f6" },
+            { name: "Binevenagh", date: "18/04/2026", type: "League", cat: "Short", dist: "13.0km", climb: "490m", lat: 55.127, lng: -6.931, color: "#3b82f6" },
+            { name: "Tollymore Hill & Dale", date: "23/04/2026", type: "League", cat: "H&D", dist: "8.0km", climb: "~300m", lat: 54.218, lng: -5.932, color: "#3b82f6" },
+            { name: "Annalong Horseshoe (Short)", date: "25/04/2026", type: "League", cat: "Short", dist: "12.0km", climb: "~800m", lat: 54.135, lng: -5.923, color: "#3b82f6" },
+            { name: "Millstone Hill & Dale", date: "04/06/2026", type: "League", cat: "H&D", dist: "7.0km", climb: "~450m", lat: 54.210, lng: -5.900, color: "#3b82f6" },
+            { name: "Spelga Skyline (Short)", date: "04/07/2026", type: "League", cat: "Short", dist: "12.0km", climb: "~750m", lat: 54.175, lng: -6.046, color: "#3b82f6" },
+            { name: "Mullaghcarn Giant", date: "25/07/2026", type: "League", cat: "Medium", dist: "12.0km", climb: "500m", lat: 54.697, lng: -7.265, color: "#3b82f6" },
+            { name: "Granite Peaks 25km", date: "29/08/2026", type: "League", cat: "Trail", dist: "25.0km", climb: "1200m", lat: 54.218, lng: -5.932, color: "#3b82f6" },
+            { name: "Buzzards Roost", date: "03/10/2026", type: "League", cat: "Short", dist: "11.9km", climb: "914m", lat: 54.135, lng: -5.923, color: "#3b82f6" },
+
+            // SPECIAL
+            { name: "Granite Peaks 50km", date: "29/08/2026", type: "Special", cat: "Ultra", dist: "55.0km", climb: "3150m", lat: 54.218, lng: -5.932, color: "#8b5cf6" }
+        ];
+
+        // Initialize Map
+        const map = L.map('map', {
+            scrollWheelZoom: false // Prevent accidental scrolling
+        }).setView([54.6, -6.5], 8);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        const tableBody = document.getElementById('race-table-body');
+        const markers = [];
+
+        raceData.forEach((race, index) => {
+            // Create Custom Marker
+            const marker = L.circleMarker([race.lat, race.lng], {
+                radius: 9,
+                fillColor: race.color,
+                color: "#ffffff",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.9
+            }).addTo(map);
+
+            markers.push(marker);
+
+            marker.bindPopup(`
+                <div class="p-1" style="min-width: 180px">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-1">${race.type}</div>
+                    <h3 class="font-bold text-slate-800 text-lg mb-2 border-b pb-1">${race.name}</h3>
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">Date</span>
+                            <span class="font-semibold text-slate-700">${race.date}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">Category</span>
+                            <span class="font-semibold text-slate-700">${race.cat}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">Distance</span>
+                            <span class="font-semibold text-slate-700">${race.dist}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-500">Climb</span>
+                            <span class="font-semibold text-slate-700">${race.climb}</span>
+                        </div>
+                    </div>
+                </div>
+            `);
+
+            // Populate Table Row
+            const row = document.createElement('tr');
+            row.className = "group hover:bg-slate-50 transition-all cursor-pointer border-l-4 border-transparent hover:border-blue-500";
+
+            const badgeClass = race.type === 'Championship' ? 'bg-red-50 text-red-600 border-red-100' :
+                race.type === 'League' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                    'bg-purple-50 text-purple-600 border-purple-100';
+
+            row.innerHTML = `
+                <td class="px-6 py-4">
+                    <div class="font-bold text-slate-800 group-hover:text-blue-600 transition-colors">${race.name}</div>
+                    <div class="text-[10px] text-slate-400 uppercase font-bold mt-0.5">${race.cat} course</div>
+                </td>
+                <td class="px-6 py-4 text-slate-600 text-sm font-medium whitespace-nowrap">${race.date}</td>
+                <td class="px-6 py-4">
+                    <span class="px-2.5 py-1 rounded-md text-[10px] font-bold uppercase border ${badgeClass}">
+                        ${race.type}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-slate-600 text-sm text-center font-mono">${race.dist}</td>
+                <td class="px-6 py-4 text-slate-600 text-sm text-center font-mono">${race.climb}</td>
+            `;
+
+            row.onclick = () => {
+                map.flyTo([race.lat, race.lng], 12, { duration: 1.5 });
+                marker.openPopup();
+                // Smooth scroll to map on mobile
+                if (window.innerWidth < 768) {
+                    document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+                }
+            };
+
+            tableBody.appendChild(row);
+        });
+
+        // Initial bounds setting
+        const bounds = L.latLngBounds(raceData.map(r => [r.lat, r.lng]));
+        map.fitBounds(bounds, { padding: [50, 50] });
+
+        // Enable scroll zoom on map click
+        map.on('click', () => {
+            if (!map.scrollWheelZoom.enabled()) {
+                map.scrollWheelZoom.enable();
+            }
+        });
+
+    </script>
+</body>
+
+</html>
